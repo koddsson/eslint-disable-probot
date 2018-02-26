@@ -16,33 +16,45 @@ module.exports = (robot) => {
       headers: {accept: "application/vnd.github.v3.diff"}
     });
 
-    console.log(context.payload)
+    // Get the first X comments on a PR
+    // TODO: Get all the comments on a PR
+    const existingComments = await context.github.pullRequests.getComments({
+      owner,
+      repo,
+      number
+    })
+    const commentsByBot = existingComments.data.filter(comment => comment.user.login === 'eslint-disable-watcher[bot]')
+    const linesCommentedOnByBot = commentsByBot.map(comment => comment.position)
 
     let currentPosition = 0
     const comments = []
+    // TODO: Check fileextension?
     for (const file of files.data) {
       const lines = file.patch.split('\n')
-      console.log(lines)
       for (const line of lines) {
         if (line.startsWith('+') && line.includes('eslint-disable')) {
-          console.log(`${currentPosition} ${line}`)
-          // TODO: Check if there is a comment already here?
-          comments.push({
-            path: file.filename,
-            position: currentPosition,
-            body: "Please don't disable eslint rules :pray:",
-          })
+          // TODO: Check if comment is hidden.
+          if (!linesCommentedOnByBot.includes(currentPosition)) {
+            comments.push({
+              path: file.filename,
+              position: currentPosition,
+              body: "Please don't disable eslint rules :pray:",
+            })
+          }
         }
         currentPosition += 1
       }
     }
-    await context.github.pullRequests.createReview({
-      owner,
-      repo,
-      number,
-      commit_id: context.payload.pull_request.head.sha,
-      event: comments.length ? 'REQUEST_CHANGES' : 'APPROVE',
-      comments,
-    })
+
+    if (comments.length) {
+      await context.github.pullRequests.createReview({
+        owner,
+        repo,
+        number,
+        commit_id: context.payload.pull_request.head.sha,
+        event: 'REQUEST_CHANGES',
+        comments,
+      })
+    }
   })
 }
