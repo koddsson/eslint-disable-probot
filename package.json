@@ -19,7 +19,7 @@
     "standard": "^10.0.3"
   },
   "engines": {
-    "node" : ">=7.*"
+    "node" : "9.*"
   },
   "standard": {
     "env": [
