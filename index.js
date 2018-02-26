@@ -2,7 +2,7 @@ module.exports = (robot) => {
   // Your code here
   robot.log('Yay, the app was loaded!')
 
-  robot.on('pull_request', async context => {
+  robot.on(['pull_request.opened', 'pull_request.synchronize'], async context => {
     const owner = context.payload.repository.owner.login
     const repo = context.payload.repository.name
     const number = context.payload.number
