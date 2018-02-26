@@ -13,8 +13,8 @@ module.exports = (robot) => {
       owner,
       repo,
       number,
-      headers: {accept: "application/vnd.github.v3.diff"}
-    });
+      headers: {accept: 'application/vnd.github.v3.diff'}
+    })
 
     // Get the first X comments on a PR
     // TODO: Get all the comments on a PR
@@ -38,7 +38,7 @@ module.exports = (robot) => {
             comments.push({
               path: file.filename,
               position: currentPosition,
-              body: "Please don't disable eslint rules :pray:",
+              body: 'Please don\'t disable eslint rules :pray:',
             })
           }
         }
@@ -58,3 +58,4 @@ module.exports = (robot) => {
     }
   })
 }
+
