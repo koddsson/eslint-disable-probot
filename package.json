@@ -18,10 +18,8 @@
     "smee-client": "^1.0.1",
     "standard": "^10.0.3"
   },
-  {
-    "engines": {
-      "node" : ">=7.*"
-    }
+  "engines": {
+    "node" : ">=7.*"
   },
   "standard": {
     "env": [
