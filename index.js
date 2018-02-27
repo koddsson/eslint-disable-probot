@@ -1,10 +1,30 @@
+async function getAllLinesCommentedOnByBot(context, owner, repo, number) {
+  let linesCommentedOnByBot = []
+  let page = 0
+  while (true) {
+    const existingComments = await context.github.pullRequests.getComments({
+      owner,
+      repo,
+      number,
+      page,
+      per_page: 100
+    })
+    const commentsByBot = existingComments.data.filter(comment => comment.user.login === 'eslint-disable-watcher[bot]')
+    linesCommentedOnByBot = linesCommentedOnByBot.concat(commentsByBot.map(comment => comment.position))
+    page += 1
+    if (existingComments.data.length < 100) break
+  }
+  return linesCommentedOnByBot
+}
+
 module.exports = (robot) => {
   robot.on(['pull_request.opened', 'pull_request.synchronize'], async context => {
     const owner = context.payload.repository.owner.login
     const repo = context.payload.repository.name
     const number = context.payload.number
-
-    // TODO: We are currently just sticking everything into memory. We should do this in a smarter way.
+    
+    // Find all the comments on the PR to make sure we don't comment on something we have already commented on.
+    const linesCommentedOnByBot = await getAllLinesCommentedOnByBot(context, owner, repo, number)
 
     let files = []
     let tempFiles
@@ -19,18 +39,7 @@ module.exports = (robot) => {
       files = files.concat(tempFiles.data)
     } while (tempFiles.data.length === 100)
 
-    let commentsByBot = []
-    let existingComments
-    do {
-      existingComments = await context.github.pullRequests.getComments({
-        owner,
-        repo,
-        number,
-        per_page: 100
-      })
-      commentsByBot = commentsByBot.concat(existingComments.data.filter(comment => comment.user.login === 'eslint-disable-watcher[bot]'))
-    } while (existingComments.data.length === 100)
-    const linesCommentedOnByBot = commentsByBot.map(comment => comment.position)
+
 
     let currentPosition = 0
     const comments = []
