@@ -23,48 +23,54 @@ module.exports = (robot) => {
     const repo = context.payload.repository.name
     const number = context.payload.number
     
+    // TODO: Read this from config
+    const commentLimit = 10
+    const commentMessage = 'Please don\'t disable eslint rules :pray:'
+    
     // Find all the comments on the PR to make sure we don't comment on something we have already commented on.
     const linesCommentedOnByBot = await getAllLinesCommentedOnByBot(context, owner, repo, number)
 
-    let files = []
-    let tempFiles
-    do {
-      tempFiles = await context.github.pullRequests.getFiles({
+    const comments = []
+    let page = 0
+    while (true) {
+      const files = await context.github.pullRequests.getFiles({
         owner,
         repo,
         number,
         headers: {accept: 'application/vnd.github.v3.diff'},
+        page,
         per_page: 100
       })
-      files = files.concat(tempFiles.data)
-    } while (tempFiles.data.length === 100)
-
-
-
-    let currentPosition = 0
-    const comments = []
-    for (const file of files) {
-      // TODO: Read this from config
-      if (!file.filename.endsWith('.js')) return
-      // In order to no spam the PR with comments we'll stop after a certain number of comments
-      // TODO: Read this from config
-      if (comments.length > 10) return
-      const lines = file.patch.split('\n')
-      for (const line of lines) {
-        if (line.startsWith('+') && line.includes('eslint-disable')) {
-          if (!linesCommentedOnByBot.includes(currentPosition)) {
-            comments.push({
-              path: file.filename,
-              position: currentPosition,
-              // TODO: Read this from config
-              body: 'Please don\'t disable eslint rules :pray:'
-            })
+      
+      let currentPosition = 0
+      for (const file of files.data) {
+        if (!file.filename.endsWith('.js')) return
+        
+        // In order to not spam the PR with comments we'll stop after a certain number of comments
+        if (comments.length > commentLimit) return
+        
+        const lines = file.patch.split('\n')
+        for (const line of lines) {
+          if (line.startsWith('+') && line.includes('eslint-disable')) {
+            if (!linesCommentedOnByBot.includes(currentPosition)) {
+              comments.push({
+                path: file.filename,
+                position: currentPosition,
+                body: commentMessage
+              })
+            }
           }
+          // We need to keep a running position of where we are in the file so we comment on the right line
+          currentPosition += 1
         }
-        currentPosition += 1
       }
-    }
+      page += 1
+      
+      
+      if (files.data.length < 100 || comments.length >= commentLimit) break
+    } 
 
+    // Only post a review if we have some comments
     if (comments.length) {
       await context.github.pullRequests.createReview({
         owner,
