@@ -38,7 +38,8 @@ module.exports = (robot) => {
             comments.push({
               path: file.filename,
               position: currentPosition,
-              body: 'Please don\'t disable eslint rules :pray:',
+              // TODO: Customize this message
+              body: 'Please don\'t disable eslint rules :pray:'
             })
           }
         }
@@ -53,9 +54,8 @@ module.exports = (robot) => {
         number,
         commit_id: context.payload.pull_request.head.sha,
         event: 'REQUEST_CHANGES',
-        comments,
+        comments
       })
     }
   })
 }
-
