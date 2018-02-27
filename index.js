@@ -1,44 +1,53 @@
 module.exports = (robot) => {
-  // Your code here
-  robot.log('Yay, the app was loaded!')
-
   robot.on(['pull_request.opened', 'pull_request.synchronize'], async context => {
     const owner = context.payload.repository.owner.login
     const repo = context.payload.repository.name
     const number = context.payload.number
 
-    // Get the first X files in a PR.
-    // TODO: Get ALL files in a PR.
-    const files = await context.github.pullRequests.getFiles({
-      owner,
-      repo,
-      number,
-      headers: {accept: 'application/vnd.github.v3.diff'}
-    })
+    // TODO: We are currently just sticking everything into memory. We should do this in a smarter way.
 
-    // Get the first X comments on a PR
-    // TODO: Get all the comments on a PR
-    const existingComments = await context.github.pullRequests.getComments({
-      owner,
-      repo,
-      number
-    })
-    const commentsByBot = existingComments.data.filter(comment => comment.user.login === 'eslint-disable-watcher[bot]')
+    let files = []
+    let tempFiles
+    do {
+      tempFiles = await context.github.pullRequests.getFiles({
+        owner,
+        repo,
+        number,
+        headers: {accept: 'application/vnd.github.v3.diff'},
+        per_page: 100
+      })
+      files = files.concat(tempFiles.data)
+    } while (tempFiles.data.length === 100)
+
+    let commentsByBot = []
+    let existingComments
+    do {
+      existingComments = await context.github.pullRequests.getComments({
+        owner,
+        repo,
+        number,
+        per_page: 100
+      })
+      commentsByBot = commentsByBot.concat(existingComments.data.filter(comment => comment.user.login === 'eslint-disable-watcher[bot]'))
+    } while (existingComments.data.length === 100)
     const linesCommentedOnByBot = commentsByBot.map(comment => comment.position)
 
     let currentPosition = 0
     const comments = []
-    // TODO: Check fileextension?
-    for (const file of files.data) {
+    for (const file of files) {
+      // TODO: Read this from config
+      if (!file.filename.endsWith('.js')) return
+      // In order to no spam the PR with comments we'll stop after a certain number of comments
+      // TODO: Read this from config
+      if (comments.length > 10) return
       const lines = file.patch.split('\n')
       for (const line of lines) {
         if (line.startsWith('+') && line.includes('eslint-disable')) {
-          // TODO: Check if comment is hidden.
           if (!linesCommentedOnByBot.includes(currentPosition)) {
             comments.push({
               path: file.filename,
               position: currentPosition,
-              // TODO: Customize this message
+              // TODO: Read this from config
               body: 'Please don\'t disable eslint rules :pray:'
             })
           }
