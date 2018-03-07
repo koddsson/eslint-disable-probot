@@ -23,9 +23,10 @@ module.exports = (robot) => {
     const repo = context.payload.repository.name
     const number = context.payload.number
     
-    // TODO: Read this from config
-    const commentLimit = 10
-    const commentMessage = 'Please don\'t disable eslint rules :pray:'
+    const {commentLimit, commentMessage} = await context.config('eslint-disable-bot.yml', {
+      commentLimit: 10,
+      commentMessage: 'Please don\'t disable eslint rules :pray:'
+    })
     
     // Find all the comments on the PR to make sure we don't comment on something we have already commented on.
     const linesCommentedOnByBot = await getAllLinesCommentedOnByBot(context, owner, repo, number)
