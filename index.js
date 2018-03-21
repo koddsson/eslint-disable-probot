@@ -23,6 +23,12 @@ module.exports = (robot) => {
     const repo = context.payload.repository.name
     const number = context.payload.number
 
+    // Poor mans feature flag :D
+    if (owner === 'koddsson' && repo === 'test-probot') {
+      const branchName = context.payload.pull_request.head.ref
+      console.log(branchName)
+    }
+
     const {commentLimit, commentMessage} = await context.config('eslint-disable-bot.yml', {
       commentLimit: 10,
       commentMessage: 'Please don\'t disable eslint rules :pray:'
