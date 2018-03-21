@@ -26,7 +26,7 @@ module.exports = (robot) => {
     // Poor mans feature flag :D
     if (owner === 'koddsson' && repo === 'test-probot') {
       const branchName = context.payload.pull_request.head.ref
-      console.log(branchName)
+      context.log(branchName)
     }
 
     const {commentLimit, commentMessage} = await context.config('eslint-disable-bot.yml', {
