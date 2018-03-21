@@ -1,4 +1,4 @@
-async function getAllLinesCommentedOnByBot(context, owner, repo, number) {
+async function getAllLinesCommentedOnByBot (context, owner, repo, number) {
   let linesCommentedOnByBot = []
   let page = 0
   while (true) {
@@ -22,12 +22,12 @@ module.exports = (robot) => {
     const owner = context.payload.repository.owner.login
     const repo = context.payload.repository.name
     const number = context.payload.number
-    
+
     const {commentLimit, commentMessage} = await context.config('eslint-disable-bot.yml', {
       commentLimit: 10,
       commentMessage: 'Please don\'t disable eslint rules :pray:'
     })
-    
+
     // Find all the comments on the PR to make sure we don't comment on something we have already commented on.
     const linesCommentedOnByBot = await getAllLinesCommentedOnByBot(context, owner, repo, number)
 
@@ -42,14 +42,14 @@ module.exports = (robot) => {
         page,
         per_page: 100
       })
-      
+
       let currentPosition = 0
       for (const file of files.data) {
         if (!file.filename.endsWith('.js')) return
-        
+
         // In order to not spam the PR with comments we'll stop after a certain number of comments
         if (comments.length > commentLimit) return
-        
+
         const lines = file.patch.split('\n')
         for (const line of lines) {
           if (line.startsWith('+') && line.includes('eslint-disable')) {
@@ -66,10 +66,9 @@ module.exports = (robot) => {
         }
       }
       page += 1
-      
-      
+
       if (files.data.length < 100 || comments.length >= commentLimit) break
-    } 
+    }
 
     // Only post a review if we have some comments
     if (comments.length) {
