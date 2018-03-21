@@ -6,7 +6,7 @@
   "license": "ISC",
   "repository": "https://github.com/koddsson/eslint-disable-bot.git",
   "scripts": {
-    "start": "probot run ./index.js",
+    "start": "LOG_LEVEL=warn probot run ./index.js",
     "test": "jest && standard"
   },
   "dependencies": {
