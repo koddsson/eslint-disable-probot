@@ -1,20 +1,52 @@
+const getPullRequestReviewCommentsQuery = `
+  query getPullRequestReviewComments($owner: String!, $name: String!, $number: Int!) {
+    repository(owner: $owner, name: $name) {
+      pullRequest(number: $number) {
+        reviews(first: 100, author:"eslint-disable-watcher[bot]") {
+          nodes {
+            comments(first: 100) {
+              nodes {
+                position
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+
 async function getAllLinesCommentedOnByBot (context, owner, repo, number) {
-  let linesCommentedOnByBot = []
-  let page = 0
-  while (true) {
-    const existingComments = await context.github.pullRequests.getComments({
+  if (owner === 'koddsson' && repo === 'test-probot') {
+    const {repository} = await context.github.query(getPullRequestReviewCommentsQuery, {
       owner,
       repo,
-      number,
-      page,
-      per_page: 100
+      number
     })
-    const commentsByBot = existingComments.data.filter(comment => comment.user.login === 'eslint-disable-watcher[bot]')
-    linesCommentedOnByBot = linesCommentedOnByBot.concat(commentsByBot.map(comment => comment.position))
-    page += 1
-    if (existingComments.data.length < 100) break
+    const reviewsByBot = repository.pullRequest.reviews.reduce(
+      (reviews, review) => [...reviews, ...review.nodes], []
+    )
+    const commentsByBot = reviewsByBot.reduce((comments, comment) => [...comments, ...comment.nodes], [])
+    const linesCommentedOnByBot = commentsByBot.map(comment => comment.position)
+    return linesCommentedOnByBot
+  } else {
+    let linesCommentedOnByBot = []
+    let page = 0
+    while (true) {
+      const existingComments = await context.github.pullRequests.getComments({
+        owner,
+        repo,
+        number,
+        page,
+        per_page: 100
+      })
+      const commentsByBot = existingComments.data.filter(comment => comment.user.login === 'eslint-disable-watcher[bot]')
+      linesCommentedOnByBot = linesCommentedOnByBot.concat(commentsByBot.map(comment => comment.position))
+      page += 1
+      if (existingComments.data.length < 100) break
+    }
+    return linesCommentedOnByBot
   }
-  return linesCommentedOnByBot
 }
 
 const getResource = `
