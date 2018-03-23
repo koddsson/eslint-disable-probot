@@ -17,38 +17,19 @@ const getPullRequestReviewCommentsQuery = `
 `
 
 async function getAllLinesCommentedOnByBot (context, owner, repo, number) {
-  if (owner === 'koddsson' && repo === 'test-probot') {
-    const {repository} = await context.github.query(getPullRequestReviewCommentsQuery, {
-      owner,
-      name: repo,
-      number
-    })
-    const commentsByBot = repository.pullRequest.reviews.nodes.reduce(
-      (comments, review) => [...comments, ...review.comments], []
-    )
-    const linesCommentedOnByBot = commentsByBot.reduce(
-      (positions, comment) => [...positions, ...comment.nodes], []
-    ).map(p => p.position)
+  const {repository} = await context.github.query(getPullRequestReviewCommentsQuery, {
+    owner,
+    name: repo,
+    number
+  })
+  const commentsByBot = repository.pullRequest.reviews.nodes.reduce(
+    (comments, review) => [...comments, ...review.comments], []
+  )
+  const linesCommentedOnByBot = commentsByBot.reduce(
+    (positions, comment) => [...positions, ...comment.nodes], []
+  ).map(p => p.position)
 
-    return linesCommentedOnByBot
-  } else {
-    let linesCommentedOnByBot = []
-    let page = 0
-    while (true) {
-      const existingComments = await context.github.pullRequests.getComments({
-        owner,
-        repo,
-        number,
-        page,
-        per_page: 100
-      })
-      const commentsByBot = existingComments.data.filter(comment => comment.user.login === 'eslint-disable-watcher[bot]')
-      linesCommentedOnByBot = linesCommentedOnByBot.concat(commentsByBot.map(comment => comment.position))
-      page += 1
-      if (existingComments.data.length < 100) break
-    }
-    return linesCommentedOnByBot
-  }
+  return linesCommentedOnByBot
 }
 
 const getResource = `
@@ -135,25 +116,14 @@ module.exports = (robot) => {
 
     // Only post a review if we have some comments
     if (comments.length) {
-      if (owner === 'koddsson' && repo === 'test-probot') {
-        const { resource } = await context.github.query(getResource, {
-          url: context.payload.pull_request.html_url
-        })
-        await context.github.query(createReviewMutation, {
-          pullRequestId: resource.id,
-          event: 'REQUEST_CHANGES',
-          comments
-        })
-      } else {
-        await context.github.pullRequests.createReview({
-          owner,
-          repo,
-          number,
-          commit_id: context.payload.pull_request.head.sha,
-          event: 'REQUEST_CHANGES',
-          comments
-        })
-      }
+      const { resource } = await context.github.query(getResource, {
+        url: context.payload.pull_request.html_url
+      })
+      await context.github.query(createReviewMutation, {
+        pullRequestId: resource.id,
+        event: 'REQUEST_CHANGES',
+        comments
+      })
     }
   })
 }
