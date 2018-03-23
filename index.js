@@ -106,11 +106,9 @@ module.exports = (robot) => {
           url: context.payload.pull_request.html_url
         })
         await context.github.query(createReviewMutation, {
-          input: {
-            pullRequestId: resource.id,
-            event: 'REQUEST_CHANGES',
-            comments
-          }
+          pullRequestId: resource.id,
+          event: 'REQUEST_CHANGES',
+          comments
         })
       } else {
         await context.github.pullRequests.createReview({
