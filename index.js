@@ -29,7 +29,7 @@ const getResource = `
 
 const createReviewMutation = `
   mutation review($id: ID!, $event: PullRequestReviewEvent!, $comments: [DraftPullRequestReviewComment]!) {
-    addPullRequestReview(id: $id, event: $event, comments: $comments) {
+    addPullRequestReview(input: {id: $id, event: $event, comments: $comments}) {
       pullRequestReview {
         id
       }
