@@ -17,6 +17,26 @@ async function getAllLinesCommentedOnByBot (context, owner, repo, number) {
   return linesCommentedOnByBot
 }
 
+const getResource = `
+  query getResource($url: URI!) {
+    resource(url: $url) {
+      ... on Node {
+        id
+      }
+    }
+  }
+`
+
+const createReviewMutation = `
+  mutation review($input: AddPullRequestReviewInput!) {
+    addPullRequestReview(input: $input) {
+      pullRequestReview {
+        id
+      }
+    }
+  }
+`
+
 module.exports = (robot) => {
   robot.on(['pull_request.opened', 'pull_request.synchronize'], async context => {
     const owner = context.payload.repository.owner.login
@@ -81,14 +101,27 @@ module.exports = (robot) => {
 
     // Only post a review if we have some comments
     if (comments.length) {
-      await context.github.pullRequests.createReview({
-        owner,
-        repo,
-        number,
-        commit_id: context.payload.pull_request.head.sha,
-        event: 'REQUEST_CHANGES',
-        comments
-      })
+      if (owner === 'koddsson' && repo === 'test-probot') {
+        const { resource } = await context.github.query(getResource, {
+          url: context.payload.pull_request.html_url
+        })
+        await context.github.query(createReviewMutation, {
+          input: {
+            id: resource.id,
+            event: 'REQUEST_CHANGES',
+            comments
+          }
+        })
+      } else {
+        await context.github.pullRequests.createReview({
+          owner,
+          repo,
+          number,
+          commit_id: context.payload.pull_request.head.sha,
+          event: 'REQUEST_CHANGES',
+          comments
+        })
+      }
     }
   })
 }
