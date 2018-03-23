@@ -32,16 +32,10 @@ module.exports = (robot) => {
     // Poor mans feature flag :D
     if (owner === 'koddsson' && repo === 'test-probot') {
       const branchName = context.payload.pull_request.head.ref
-      context.log.warn('PAYLOAD:', context.payload)
-      context.log.warn('BRANCH NAME:', branchName)
-      const pullRequest = await context.github.pullRequests.get({
-        owner,
-        repo,
-        number
-      })
-      context.log.warn('PULL REQUEST:', pullRequest)
 
-      if (skipBranchMatching && branchName.match(new RegExp(skipBranchMatching))) {
+      const regex = new RegExp(skipBranchMatching)
+      if (skipBranchMatching && branchName.match(regex)) {
+        context.log.warn(`Skipping branch: ${branchName} because of regex ${regex}`)
         return
       }
     }
