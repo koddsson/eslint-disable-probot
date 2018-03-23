@@ -29,15 +29,12 @@ module.exports = (robot) => {
       skipBranchMatching: null
     })
 
-    // Poor mans feature flag :D
-    if (owner === 'koddsson' && repo === 'test-probot') {
-      const branchName = context.payload.pull_request.head.ref
-
-      const regex = new RegExp(skipBranchMatching)
-      if (skipBranchMatching && branchName.match(regex)) {
-        context.log.warn(`Skipping branch: ${branchName} because of regex ${regex}`)
-        return
-      }
+    // Check if we should skip this branch
+    const branchName = context.payload.pull_request.head.ref
+    const regex = new RegExp(skipBranchMatching)
+    if (skipBranchMatching && branchName.match(regex)) {
+      context.log.warn(`Skipping branch: ${branchName} because of regex ${regex}`)
+      return
     }
 
     // Find all the comments on the PR to make sure we don't comment on something we have already commented on.
