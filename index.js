@@ -23,11 +23,13 @@ async function getAllLinesCommentedOnByBot (context, owner, repo, number) {
       name: repo,
       number
     })
-    const reviewsByBot = repository.pullRequest.reviews.reduce(
-      (reviews, review) => [...reviews, ...review.nodes], []
+    const commentsByBot = repository.pullRequest.reviews.nodes.reduce(
+      (comments, review) => [...comments, ...review.comments], []
     )
-    const commentsByBot = reviewsByBot.reduce((comments, comment) => [...comments, ...comment.nodes], [])
-    const linesCommentedOnByBot = commentsByBot.map(comment => comment.position)
+    const linesCommentedOnByBot = commentsByBot.reduce(
+      (positions, comment) => [...positions, ...comment.nodes], []
+    ).map(p => p.position)
+
     return linesCommentedOnByBot
   } else {
     let linesCommentedOnByBot = []
