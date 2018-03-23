@@ -1,20 +1,5 @@
-const getPullRequestReviewCommentsQuery = `
-  query getPullRequestReviewComments($owner: String!, $name: String!, $number: Int!) {
-    repository(owner: $owner, name: $name) {
-      pullRequest(number: $number) {
-        reviews(first: 100, author:"eslint-disable-watcher[bot]") {
-          nodes {
-            comments(first: 100) {
-              nodes {
-                position
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`
+const {getResource, getPullRequestReviewCommentsQuery} = require('./graphql/queries')
+const {createReviewMutation} = require('./graphql/mutations')
 
 async function getAllLinesCommentedOnByBot (context, owner, repo, number) {
   const {repository} = await context.github.query(getPullRequestReviewCommentsQuery, {
@@ -31,26 +16,6 @@ async function getAllLinesCommentedOnByBot (context, owner, repo, number) {
 
   return linesCommentedOnByBot
 }
-
-const getResource = `
-  query getResource($url: URI!) {
-    resource(url: $url) {
-      ... on Node {
-        id
-      }
-    }
-  }
-`
-
-const createReviewMutation = `
-  mutation review($pullRequestId: ID!, $event: PullRequestReviewEvent!, $comments: [DraftPullRequestReviewComment]!) {
-    addPullRequestReview(input: {pullRequestId: $pullRequestId, event: $event, comments: $comments}) {
-      pullRequestReview {
-        id
-      }
-    }
-  }
-`
 
 module.exports = (robot) => {
   robot.on(['pull_request.opened', 'pull_request.synchronize'], async context => {
