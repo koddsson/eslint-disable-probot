@@ -20,7 +20,7 @@ async function getAllLinesCommentedOnByBot (context, owner, repo, number) {
   if (owner === 'koddsson' && repo === 'test-probot') {
     const {repository} = await context.github.query(getPullRequestReviewCommentsQuery, {
       owner,
-      repo,
+      name: repo,
       number
     })
     const reviewsByBot = repository.pullRequest.reviews.reduce(
