@@ -23,6 +23,12 @@ module.exports = (robot) => {
     const repo = context.payload.repository.name
     const number = context.payload.number
 
+    const {commentLimit, commentMessage, skipBranchMatching} = await context.config('eslint-disable-bot.yml', {
+      commentLimit: 10,
+      commentMessage: 'Please don\'t disable eslint rules :pray:',
+      skipBranchMatching: null
+    })
+
     // Poor mans feature flag :D
     if (owner === 'koddsson' && repo === 'test-probot') {
       const branchName = context.payload.pull_request.head.ref
@@ -34,12 +40,11 @@ module.exports = (robot) => {
         number
       })
       context.log.warn('PULL REQUEST:', pullRequest)
-    }
 
-    const {commentLimit, commentMessage} = await context.config('eslint-disable-bot.yml', {
-      commentLimit: 10,
-      commentMessage: 'Please don\'t disable eslint rules :pray:'
-    })
+      if (skipBranchMatching && branchName.match(new RegExp(skipBranchMatching))) {
+        return
+      }
+    }
 
     // Find all the comments on the PR to make sure we don't comment on something we have already commented on.
     const linesCommentedOnByBot = await getAllLinesCommentedOnByBot(context, owner, repo, number)
