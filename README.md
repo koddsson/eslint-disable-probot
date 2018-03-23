@@ -21,6 +21,8 @@ You don't need any configuration for this to work in your project but you can cu
 commentLimit: 10
 # The message the bot will post on any lines containing a eslint disable comment.
 commentMessage: Please don't disable eslint rules :pray:
+# A optional regular expression that will match against the branch name and not comment on it if it matches.
+skipBranchMatching: null
 ```
 
 If you need more configuration, please [let me know in a new issue](https://github.com/koddsson/eslint-disable-probot/issues/new?title=[Config]&body=Can%20you%20please%20add%20the%20___%20config%20option).
