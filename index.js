@@ -52,8 +52,8 @@ module.exports = (robot) => {
         per_page: 100
       })
 
-      let currentPosition = 0
       for (const file of files.data) {
+        let currentPosition = 0
         if (!file.filename.endsWith('.js')) return
 
         // In order to not spam the PR with comments we'll stop after a certain number of comments
