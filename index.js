@@ -59,6 +59,9 @@ module.exports = (robot) => {
         // In order to not spam the PR with comments we'll stop after a certain number of comments
         if (comments.length > commentLimit) return
 
+        // Bail if file does not contain valid patch (e.g., file was renamed)
+        if (!file.patch || typeof file.patch !== 'string') return
+
         const lines = file.patch.split('\n')
         for (const line of lines) {
           if (line.startsWith('+') && line.includes('eslint-disable')) {
